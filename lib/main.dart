@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:barcode_scan2/platform_wrapper.dart';
+import 'package:flutter/services.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const SuiBookManager());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class SuiBookManager extends StatelessWidget {
+  const SuiBookManager({super.key});
 
   // This widget is the root of your application.
   @override
@@ -24,13 +26,13 @@ class MyApp extends StatelessWidget {
         // is not restarted.
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const SuiBookManagerHomePage(title: 'Flutter Demo Home Page'),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+class SuiBookManagerHomePage extends StatefulWidget {
+  const SuiBookManagerHomePage({super.key, required this.title});
 
   // This widget is the home page of your application. It is stateful, meaning
   // that it has a State object (defined below) that contains fields that affect
@@ -44,10 +46,35 @@ class MyHomePage extends StatefulWidget {
   final String title;
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<SuiBookManagerHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<SuiBookManagerHomePage> {
+  String readData = "";
+  String typeData = "";
+
+  Future scan() async {
+    try {
+      var scan = await BarcodeScanner.scan();
+      setState(() {
+        readData = scan.rawContent;
+        typeData = scan.format.name;
+      });
+    }
+    on PlatformException catch (e) {
+      if (e == BarcodeScanner.cameraAccessDenied) {
+        setState(() {
+          readData = 'Camera permissions are not valid.';
+        });
+      }
+      else {
+        setState(() {
+          readData = 'Unexplained error : $e';
+        });
+      }
+    }
+  }
+
   int _counter = 0;
 
   void _incrementCounter() {
@@ -99,14 +126,14 @@ class _MyHomePageState extends State<MyHomePage> {
               'You have pushed the button this many times:',
             ),
             Text(
-              '$_counter',
+              readData,//'$_counter',
               style: Theme.of(context).textTheme.headlineMedium,
             ),
           ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
+        onPressed: scan,//_incrementCounter,
         tooltip: 'Increment',
         child: const Icon(Icons.add),
       ), // This trailing comma makes auto-formatting nicer for build methods.
